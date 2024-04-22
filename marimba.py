@@ -6,7 +6,7 @@ COSTO_TOTAL = [600000, 300000, 280000]  #!DATOS SACADOS DE MERCADO LIBRE
 TIPOS_MADERA = ['PINO', 'HORMIGUILLO']
 INCRUSTACION = ["A", "B", "C"]
 TAMANIOS = ["PROFESIONAL", "GRANDE", "MEDIANA"]
-BARRIZADO = ["NORMAL", "TINTA"]
+BARNIZADO = ["NORMAL", "TINTA"]
 TAMANO_POBLACION = 50
 PROBABILIDAD_MUTACION = 0.1
 GENERACIONES = 20
@@ -18,181 +18,423 @@ peores_grafico = []
 promedios_grafico = []
 mejores_grafico = []
 
+tamañoPoblacion = 0
+maximoPoblacion = 0
+minimo = 0
+maximo = 0
+generaciones = 0
+allFitness = []
 
-def CrearMarimba():
-    return {
-        'faldones': random.choice(TIPOS_MADERA),
-        'bastidores': random.choice(TIPOS_MADERA),
-        'cajones': random.choice(TIPOS_MADERA),
-        'patas': random.choice(TIPOS_MADERA),
-        'tirantes': random.choice(TIPOS_MADERA),
-        'teclas': random.choice(TIPOS_MADERA),
-        'incrustaciones': random.choice(INCRUSTACION),
-        'tamanio': TAMANIOS[0],
-        'barnizado': random.choice(BARRIZADO)
-    }
+listaSeleccion = []
+listaCruza = []
+listaMutacion = []
+listaFitness = []
 
-
-def Costos(marimba):
-    costo = 0
-    for componente, madera in marimba.items():
-        if componente == "faldones":
-            costo += 5000 if madera == "PINO" else 7000
-        elif componente == "bastidores":
-            costo += 2000 if madera == "PINO" else 3000
-        elif componente == "cajones":
-            costo += 10000 if madera == "PINO" else 20000
-        elif componente == "patas":
-            costo += 1000 if madera == "PINO" else 1500
-        elif componente == "tirantes":
-            costo += 15000 if madera == "PINO" else 20000
-        elif componente == "teclas":
-            costo += 15000 if madera == "PINO" else 200000
-        elif componente == "incrustaciones":
-            costo += 1500 if madera == "PINO" else 1000
-        elif componente == "barnizado":
-            costo += 10000 if madera == "PINO" else 15000
-    return costo
+contador_gens = 0
+contadorControl = 0
+mejores_gen = []
+peores_gen = []
+mejoresFit = []
+promedio_gen = []
 
 
-def CalcularCosto(marimbas):
-    poblacion_con_costo = []
-    for marimba in marimbas:
-        marimba_con_costo = marimba.copy()
-        marimba_con_costo['costo'] = Costos(marimba)
-        poblacion_con_costo.append(marimba_con_costo)
-    return poblacion_con_costo
+def GenerarPrecio():
+    valor = COSTO_TOTAL[0] // 9
+    return random.uniform(100, valor)  # Rango de precios para la madera
 
 
-def CalcularFitness(marimbas):
-    global promedios_individuoss
-    poblacion_fitness = []
-    for marimba in marimbas:
-        costo_marimba = CalcularCosto([marimba])[0]['costo']
-        if costo_marimba is not None:  # Verificar si el costo se calculó correctamente
-            fitness = 1 / (1 + abs(costo_marimba - COSTO_TOTAL[0]))
-            promedio = fitness / TAMANO_POBLACION
-            promedios_individuoss.append(promedio)
-            marimba_con_fitness = marimba.copy()
-            marimba_con_fitness['fitness'] = fitness
-            poblacion_fitness.append(marimba_con_fitness)
-    return poblacion_fitness
+def CrearMarimba(tamaño_poblacion):
+    global contadorControl
+    global listaSeleccion
+    global listaCruza
+    global listaMutacion
+    global listaFitness
+    for i in range(tamaño_poblacion):
+        tablaSeleccion = {
+            'Indice': i + 1,
+            'Faldones': random.choice(TIPOS_MADERA),
+            'FaldonesPrecio': 0,
+            'Bastidores': random.choice(TIPOS_MADERA),
+            'BastidoresPrecio': 0,
+            'Cajones': random.choice(TIPOS_MADERA),
+            'CajonesPrecio': 0,
+            'Patas': random.choice(TIPOS_MADERA),
+            'PatasPrecios': 0,
+            'Tirantes': random.choice(TIPOS_MADERA),
+            'TirantesPrecios': 0,
+            'Teclas': random.choice(TIPOS_MADERA),
+            'TeclasPrecios': 0,
+            'Incrustaciones': random.choice(INCRUSTACION),
+            'IncrustacionesPrecios': 0,
+            'Tamanio': TAMANIOS[0],
+            'TamanioPrecios': COSTO_TOTAL[0],
+            'Barnizado': random.choice(BARNIZADO),
+            'BarnizadoPrecio': 0,
+            'Fitness': 0
+        },
+        tablaCruza = {
+            'Indice': '',
+            'Faldones': '',
+            'FaldonesPrecio': 0,
+            'Bastidores': '',
+            'BastidoresPrecio': 0,
+            'Cajones': '',
+            'CajonesPrecio': 0,
+            'Patas': '',
+            'PatasPrecios': 0,
+            'Tirantes': '',
+            'TirantesPrecios': 0,
+            'Teclas': '',
+            'TeclasPrecios': 0,
+            'Incrustaciones': '',
+            'IncrustacionesPrecios': 0,
+            'Tamanio': '',
+            'TamanioPrecios': '',
+            'Barnizado': '',
+            'BarnizadoPrecio': 0,
+            'Fitness': 0
+        },
+        tablaMutacion = {
+            'Faldones': '',
+            'FaldonesPrecio': '',
+            'Bastidores': '',
+            'BastidoresPrecio': '',
+            'Cajones': '',
+            'CajonesPrecio': '',
+            'Patas': '',
+            'PatasPrecios': '',
+            'Tirantes': '',
+            'TirantesPrecios': '',
+            'Teclas': '',
+            'TeclasPrecios': '',
+            'Incrustaciones': '',
+            'IncrustacionesPrecios': '',
+            'Tamanio': '',
+            'TamanioPrecios': '',
+            'Barnizado': '',
+            'BarnizadoPrecio': '',
+            'Fitness': 0
+        },
+        tablaFitness = {
+            'Padre': 0,
+            'Fitness padre': 0,
+            'Hijo': 0,
+            'Fitness hijo': 0,
+            'Mejor fitness': 0,
+            'Cadena de bits': 0
+        },
+        listaSeleccion.extend(tablaSeleccion)
+        listaCruza.extend(tablaCruza)
+        listaMutacion.extend(tablaMutacion)
+        listaFitness.extend(tablaFitness)
+        contadorControl += 1
 
 
-def Cruzar(padre1, padre2):
-    hijo = {}
-    for componente in padre1:
-        # 50% de probabilidad de heredar del padre 1 y 50% del padre 2
-        hijo[componente] = padre1[componente] if random.random(
-        ) < 0.5 else padre2[componente]
-    return hijo
+def seleccion():
+    global listaSeleccion, listaCruza
+    sumaFitness = 0
+    promedioFitness = 0
+    peorFitness = 0
+    probAcumulada = 0
+    for i in range(len(listaSeleccion)):
+        precio = GenerarPrecio()
+        listaSeleccion[i].update({'FaldonesPrecio': precio})
+        sumaFitness += precio
+        precio = GenerarPrecio()
+        listaSeleccion[i].update({'BastidoresPrecio': precio})
+        sumaFitness += precio
+        precio = GenerarPrecio()
+        listaSeleccion[i].update({'CajonesPrecio': precio})
+        sumaFitness += precio
+        precio = GenerarPrecio()
+        listaSeleccion[i].update({'PatasPrecios': precio})
+        sumaFitness += precio
+        precio = GenerarPrecio()
+        listaSeleccion[i].update({'TirantesPrecios': precio})
+        sumaFitness += precio
+        precio = GenerarPrecio()
+        listaSeleccion[i].update({'TeclasPrecios': precio})
+        sumaFitness += precio
+        precio = GenerarPrecio()
+        listaSeleccion[i].update({'IncrustacionesPrecios': precio})
+        sumaFitness += precio
+        precio = GenerarPrecio()
+        listaSeleccion[i].update({'BarnizadoPrecio': precio})
+        sumaFitness += precio
+
+    for i in range(len(listaSeleccion)):
+        precio_total = (listaSeleccion[i]['FaldonesPrecio'] +
+                        listaSeleccion[i]['BastidoresPrecio'] +
+                        listaSeleccion[i]['CajonesPrecio'] +
+                        listaSeleccion[i]['PatasPrecios'] +
+                        listaSeleccion[i]['TirantesPrecios'] +
+                        listaSeleccion[i]['TeclasPrecios'] +
+                        listaSeleccion[i]['IncrustacionesPrecios'] +
+                        listaSeleccion[i]['BarnizadoPrecio'])
+        listaSeleccion[i]['Fitness'] = precio_total
+        sumaFitness += precio_total
+    promedioFitness = sumaFitness / len(listaSeleccion)
+    for i in range(len(listaSeleccion)):
+        if (i == 0):
+            peor_fitness = listaSeleccion[0].get("Fitness")
+            minimo_fitness = listaSeleccion[0].get('Fitness')
+        else:
+            if (listaSeleccion[i].get('Fitness') > peor_fitness):
+                peor_fitness = listaSeleccion[i].get('Fitness')
+                minimo_fitness = listaSeleccion[i].get('Fitness')
+            if (minimo_fitness > listaSeleccion[i].get('Fitness')):
+                minimo_fitness = listaSeleccion[i].get('Fitness')
+        prob = listaSeleccion[i].get('Fitness') / sumaFitness
+        expCount = listaSeleccion[i].get('Fitness') / promedioFitness
+    mejores = {
+        'Generacion': contador_gens,
+        'Mejor': peor_fitness,
+        'Peor': minimo_fitness,
+        'Promedio': promedioFitness
+    },
+    mejoresFit.extend(mejores)
+    equis = 0
+    for i in range(len(listaSeleccion)):
+        listaFitness[equis].update(
+            {'Fitness padre': listaSeleccion[i].get('Fitness')})
+        equis += 1
 
 
-def Mutacion(individuo):
-    componente_a_mutar = random.choice(list(individuo.keys()))
-    if componente_a_mutar in [
-            'faldones', 'bastidores', 'cajones', 'patas', 'tirantes', 'teclas'
-    ]:
-        individuo[componente_a_mutar] = random.choice(TIPOS_MADERA)
-    elif componente_a_mutar == 'incrustaciones':
-        individuo[componente_a_mutar] = random.choice(INCRUSTACION)
-    elif componente_a_mutar == 'barnizado':
-        individuo[componente_a_mutar] = random.choice(BARRIZADO)
-    individuo_con_costo = CalcularCosto([individuo])[0]
-    individuo_con_fitness = CalcularFitness([individuo_con_costo])[0]
-    return individuo_con_fitness
+def Cruza():
+    for y in range(0, len(listaCruza), 2):
+        padre1 = listaCruza[y]
+        padre2 = listaCruza[y + 1]
+        listaCruza[y].update({"Faldones": padre2.get("Faldones")})
+        listaCruza[y + 1].update({"Faldones": padre1.get("Faldones")})
+        listaCruza[y].update({"Bastidores": padre2.get("Bastidores")})
+        listaCruza[y + 1].update({"Bastidores": padre1.get("Bastidores")})
+        listaCruza[y].update({"Cajones": padre2.get("Cajones")})
+        listaCruza[y + 1].update({"Cajones": padre1.get("Cajones")})
+        listaCruza[y].update({"Patas": padre2.get("Patas")})
+        listaCruza[y + 1].update({"Patas": padre1.get("Patas")})
+        listaCruza[y].update({"Tirantes": padre2.get("Tirantes")})
+        listaCruza[y + 1].update({"Tirantes": padre1.get("Tirantes")})
+        listaCruza[y].update({"Teclas": padre2.get("Teclas")})
+        listaCruza[y + 1].update({"Teclas": padre1.get("Teclas")})
+        listaCruza[y].update({"Incrustaciones": padre2.get("Incrustaciones")})
+        listaCruza[y + 1].update(
+            {"Incrustaciones": padre1.get("Incrustaciones")})
+        listaCruza[y].update({"Barnizado": padre2.get("Barnizado")})
+        listaCruza[y + 1].update({"Barnizado": padre1.get("Barnizado")})
+    for i in range(len(listaCruza)):
+        precio = GenerarPrecio()
+        listaCruza[i].update({'FaldonesPrecio': precio})
+        precio = GenerarPrecio()
+        listaCruza[i].update({'BastidoresPrecio': precio})
+        precio = GenerarPrecio()
+        listaCruza[i].update({'CajonesPrecio': precio})
+        precio = GenerarPrecio()
+        listaCruza[i].update({'PatasPrecios': precio})
+        precio = GenerarPrecio()
+        listaCruza[i].update({'TirantesPrecios': precio})
+        precio = GenerarPrecio()
+        listaCruza[i].update({'TeclasPrecios': precio})
+        precio = GenerarPrecio()
+        listaCruza[i].update({'IncrustacionesPrecios': precio})
+        precio = GenerarPrecio()
+        listaCruza[i].update({'BarnizadoPrecio': precio})
 
 
-def SeleccionarMejores(poblacion, n):
-    global peores_individuos
-    # print(poblacion," esto mando")
-    poblacion_ordenada = sorted(
-        poblacion,
-        key=lambda x: x.get('fitness', float('-inf')
-                            ),  # Usar float('-inf') como valor predeterminado
-    )
+def Mutacion(generacion):
+    auxMutados = []
+    for x in range(0, len(listaMutacion), 2):
+        mut = bool(random.getrandbits(1))
+        if mut:
+            listaMutacion[x].update({
+                'Faldones': random.choice(TIPOS_MADERA),
+            })
 
-    # print(poblacion_ordenada, "Asd")
-    mejores = poblacion_ordenada[:n]
-    peores = poblacion_ordenada[-n:]
-    # print(peores)
-    peores_individuos.extend(poblacion_ordenada[-n:])
-    return mejores
+            listaMutacion[x].update({
+                'Bastidores': random.choice(TIPOS_MADERA),
+            })
+            listaMutacion[x].update({
+                'Cajones': random.choice(TIPOS_MADERA),
+            })
+
+            listaMutacion[x].update({
+                'Tirantes': random.choice(TIPOS_MADERA),
+            })
+            listaMutacion[x].update({
+                'Teclas': random.choice(TIPOS_MADERA),
+            })
+            listaMutacion[x].update({
+                'Incrustaciones':
+                random.choice(INCRUSTACION),
+            })
+            listaMutacion[x].update({
+                'Barnizado': random.choice(BARNIZADO),
+            })
+    for i in range(len(listaMutacion)):
+        precio = GenerarPrecio()
+        listaMutacion[i].update({'FaldonesPrecio': precio})
+        precio = GenerarPrecio()
+        listaMutacion[i].update({'BastidoresPrecio': precio})
+        precio = GenerarPrecio()
+        listaMutacion[i].update({'CajonesPrecio': precio})
+        precio = GenerarPrecio()
+        listaMutacion[i].update({'PatasPrecios': precio})
+        precio = GenerarPrecio()
+        listaMutacion[i].update({'TirantesPrecios': precio})
+        precio = GenerarPrecio()
+        listaMutacion[i].update({'TeclasPrecios': precio})
+        precio = GenerarPrecio()
+        listaMutacion[i].update({'IncrustacionesPrecios': precio})
+        precio = GenerarPrecio()
+        listaMutacion[i].update({'BarnizadoPrecio': precio})
+    auxMutados = listaMutacion
+    auxMutados = sorted(auxMutados, key=lambda x: x['Fitness'], reverse=True)
+    ActualizarDatos(auxMutados, generacion)
 
 
-def ComprobarCosto(individuo):
-    if 'costo' in individuo:
-        print("El individuo tiene costo.")
-    else:
-        print("El individuo no tiene costo.")
+def ActualizarDatos(mutados, generacion):
+    global contadorControl
+    for x in range(2):
+        if contadorControl < maximoPoblacion:
+            contadorControl += 1
+            tablaSeleccion = {
+                "Indice": contadorControl - 1,
+                'Faldones': mutados[x].get("Faldones"),
+                'FaldonesPrecio': 0,
+                'Bastidores': mutados[x].get("Bastidores"),
+                'BastidoresPrecio': 0,
+                'Cajones': mutados[x].get("Cajones"),
+                'CajonesPrecio': 0,
+                'Patas': mutados[x].get("Patas"),
+                'PatasPrecios': 0,
+                'Tirantes': mutados[x].get("Tirantes"),
+                'TirantesPrecios': 0,
+                'Teclas': mutados[x].get("Teclas"),
+                'TeclasPrecios': 0,
+                'Incrustaciones': mutados[x].get("Incrustaciones"),
+                'IncrustacionesPrecios': 0,
+                'Tamanio': TAMANIOS[0],
+                'TamanioPrecios': COSTO_TOTAL[0],
+                'Barnizado': mutados[x].get("Barnizado"),
+                'BarnizadoPrecio': 0,
+                'Fitness': 0
+            },
+            tablaCruza = {
+                'Faldones': mutados[x].get("Faldones"),
+                'FaldonesPrecio': 0,
+                'Bastidores': mutados[x].get("Bastidores"),
+                'BastidoresPrecio': 0,
+                'Cajones': mutados[x].get("Cajones"),
+                'CajonesPrecio': 0,
+                'Patas': mutados[x].get("Patas"),
+                'PatasPrecios': 0,
+                'Tirantes': mutados[x].get("FaldTirantesones"),
+                'TirantesPrecios': 0,
+                'Teclas': mutados[x].get("Teclas"),
+                'TeclasPrecios': 0,
+                'Incrustaciones': mutados[x].get("Incrustaciones"),
+                'IncrustacionesPrecios': 0,
+                'Tamanio': TAMANIOS[0],
+                'TamanioPrecios': COSTO_TOTAL[0],
+                'Barnizado': mutados[x].get("Barnizado"),
+                'BarnizadoPrecio': 0,
+                'Fitness': 0
+            },
+            tablaMutacion = {
+                'Faldones': '',
+                'FaldonesPrecio': '',
+                'Bastidores': '',
+                'BastidoresPrecio': '',
+                'Cajones': '',
+                'CajonesPrecio': '',
+                'Patas': '',
+                'PatasPrecios': '',
+                'Tirantes': '',
+                'TirantesPrecios': '',
+                'Teclas': '',
+                'TeclasPrecios': '',
+                'Incrustaciones': '',
+                'IncrustacionesPrecios': '',
+                'Tamanio': '',
+                'TamanioPrecios': '',
+                'Barnizado': '',
+                'BarnizadoPrecio': '',
+                'Fitness': 0
+            },
+            tablaFitness = {
+                'Padre': 0,
+                'Fitness padre': 0,
+                'Hijo': 0,
+                'Fitness hijo': 0,
+                'Mejor fitness': 0
+            }
+            listaSeleccion.extend(tablaSeleccion)
+            listaCruza.extend(tablaCruza)
+            listaMutacion.extend(tablaMutacion)
+            listaFitness.append(tablaFitness)
+        else:
+            ControlPoblacion(contadorControl)
 
 
-# def AlgoritmoGenetico():
-#     global mejores_individuos, GENERACIONES
-#     poblacion = [CrearMarimba() for _ in range(TAMANO_POBLACION)]
-#     poblacion = CalcularFitness(poblacion)
+def ControlPoblacion(contadorControl):
+    for x in range(contadorControl):
+        if (listaFitness[x].get('Fitness hijo')
+                > listaFitness[x].get('Fitness padre')):
+            listaSeleccion[x].update(
+                {'Poblacion Inicial': listaFitness[x].get('Hijo')})
+        else:
+            listaSeleccion[x].update(
+                {'Poblacion Inicial': listaFitness[x].get('Padre')})
+        listaSeleccion[x].update({
+            'Valor de x': 0,
+            'Fitness': 0,
+            'Prob i': 0,
+            'Prob acumulada': 0,
+            'Conteo esperado': 0,
+            'Conteo actual': 0
+        })
 
-#     nueva_generacion = []
-#     for _ in range(GENERACIONES):
-#         padre1, padre2 = random.sample(poblacion, 2)
-#         hijo = Cruzar(padre1, padre2)
-#         if random.random() < PROBABILIDAD_MUTACION:
-#             hijo = Mutacion(hijo)
-#         nueva_generacion.append(hijo)  #267500
-#     poblacion_seleccionada = SeleccionarMejores(nueva_generacion,
-#                                                 TAMANO_POBLACION)
-#     mejores_individuos.extend(poblacion_seleccionada)
-#     Clasificar()
+
+def Empezar(tamañoPoblacion, poblacionMax, generaciones):
+    global contador_gens
+    global maximoPoblacion
+    maximoPoblacion = poblacionMax
+    CrearMarimba(tamañoPoblacion)
+    for i in range(generaciones):
+        seleccion()
+        Cruza()
+        Mutacion(generaciones)
+    Clasificar(generaciones)
 
 
-def AlgoritmoGenetico():
-    global mejores_individuos, peores_individuos, promedios_individuoss
-    poblacion = [CrearMarimba() for _ in range(TAMANO_POBLACION)]
-    poblacion = CalcularFitness(poblacion)
+def Clasificar(generaciones):
+    global mejores_gen, peores_gen, promedio_gen
+    for i in range(generaciones):
+        mejores_gen.append(mejoresFit[i].get('Mejor'))
+        peores_gen.append(mejoresFit[i].get('Peor'))
+        promedio_gen.append(mejoresFit[i].get('Promedio'))
+    GenerarGrafica(mejores_gen, peores_gen, promedio_gen)
 
-    nueva_generacion = []
-    for _ in range(GENERACIONES):
-        padre1, padre2 = random.sample(poblacion, 2)
-        hijo = Cruzar(padre1, padre2)
-        if random.random() < PROBABILIDAD_MUTACION:
-            hijo = Mutacion(hijo)
-        nueva_generacion.append(hijo)
-    poblacion_seleccionada = SeleccionarMejores(nueva_generacion,
-                                                TAMANO_POBLACION)
-    mejores_individuos.extend(poblacion_seleccionada)
-    Clasificar()
 
-def Graficar(x, y, z):
-    print(x, " eso es mejor")
-    plt.plot(x, label="Mejor Caso")  # Dibuja el gráfico
+def GenerarGrafica(x, y, z):
+    x = sorted(x)
+    y = sorted(y,reverse=True)
+    z = sorted(z)
+    print("MEJOR MARIMBA XD ", peores_gen[len(mejoresFit)-1])
+    plt.plot(x, label="Caso promedio")  # Dibuja el gráfico
     plt.xlabel("Generaciones")  # Inserta el título del eje X
     plt.ylabel("Evolucion del Fitness")  # Inserta el título del eje Y
     plt.ioff()  # Desactiva modo interactivo de dibujo
     plt.ion()  # Activa modo interactivo de dibujo
-    plt.plot(
-        y,
-        label="Peor Caso")  # Dibuja datos de lista2 sin borrar datos de lista1
+    plt.plot(y, label="Mejor Caso"
+             )  # Dibuja datos de lista2 sin borrar datos de lista1
     plt.ioff()  # Desactiva modo interactivo
     plt.ion()  # Activa modo interactivo de dibujo
-    plt.plot(z, label="Caso promedio"
+    plt.plot(z, label="Peor caso"
              )  # Dibuja datos de lista2 sin borrar datos de lista1
     plt.ioff()  # Desactiva modo interactivo
     # plt.plot(lista3)   # No dibuja datos de lista3
     plt.legend()
-    plt.show()  # Fuerza dibujo de datos de l
+    plt.show()  # Fuerza dibujo de datos de lista3
 
 
-def Clasificar():
-    global GENERACIONES, mejores_individuos, peores_individuos, promedios_individuoss
-    global peores_grafico, promedios_grafico, mejores_grafico
-    ComprobarCosto(mejores_individuos)
-    for marimba in mejores_individuos:
-        mejores_grafico.append(marimba['fitness'])
-    for marimba in peores_individuos:
-        peores_grafico.append(marimba['fitness'])
-    for promedio in promedios_individuoss:
-        promedios_grafico.append(promedio)
-    Graficar(mejores_grafico, peores_grafico, promedios_grafico)
-
-
-AlgoritmoGenetico()
+Empezar(10, 20, 500)
